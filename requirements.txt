@@ -1,0 +1,9 @@
+flask==2.0.1
+requests==2.26.0
+PyGithub==1.55
+sentence-transformers==2.2.2
+faiss-cpu==1.7.2
+langchain==0.1.0
+langchain-openai==0.0.5
+python-dotenv==0.19.1
+markdown==3.3.6
