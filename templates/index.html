@@ -3,53 +3,313 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MCP RAG Chatbot</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>MCP Assistant</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Highlight.js for code syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Tailwind config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    },
+                    animation: {
+                        'bounce-slow': 'bounce 1.5s infinite',
+                        'typing': 'typing 1s infinite',
+                    },
+                    keyframes: {
+                        typing: {
+                            '0%': { opacity: 0.2 },
+                            '50%': { opacity: 1 },
+                            '100%': { opacity: 0.2 },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>Model Context Protocol Assistant</h1>
-            <p>Ask questions about Model Context Protocol (MCP)</p>
+<body class="transition-colors duration-300 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col min-h-screen py-4 sm:py-6">
+        <!-- Header -->
+        <header class="mb-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <!-- Logo/Icon -->
+                    <div class="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center text-white">
+                        <i class="fas fa-robot text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold bg-gradient-to-r from-primary-600 to-violet-600 bg-clip-text text-transparent">MCP Assistant</h1>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Model Context Protocol Specialist</p>
+                    </div>
+                </div>
+                
+                <!-- Theme Toggle -->
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors">
+                    <i class="fas fa-moon hidden dark:block text-yellow-300"></i>
+                    <i class="fas fa-sun block dark:hidden text-yellow-500"></i>
+                </button>
+            </div>
         </header>
         
-        <main>
-            <div class="chat-container" id="chat-container">
-                <div class="messages" id="messages">
-                    <div class="message system">
-                        <div class="message-content">
-                            <p>Hello! I'm your Model Context Protocol assistant. I can help answer your questions about MCP, an open protocol that enables seamless integration between LLM applications and external data sources and tools. How can I help you today?</p>
+        <!-- Main Chat Area -->
+        <main class="flex-1 flex flex-col">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg flex flex-col h-[75vh] overflow-hidden">
+                <!-- Chat Messages -->
+                <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
+                    <!-- Welcome Message -->
+                    <div class="flex items-start space-x-2">
+                        <div class="w-8 h-8 rounded-full bg-primary-600 flex-shrink-0 flex items-center justify-center text-white">
+                            <i class="fas fa-robot text-sm"></i>
+                        </div>
+                        <div class="max-w-[80%]">
+                            <div class="flex items-end mb-1">
+                                <span class="font-medium text-sm">MCP Assistant</span>
+                                <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">Just now</span>
+                            </div>
+                            <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg rounded-tl-none">
+                                <p>Welcome! I'm your Model Context Protocol assistant. I can help answer your questions about MCP, an open protocol that enables seamless integration between LLM applications and external data sources and tools. How can I help you today?</p>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="input-container">
-                    <form id="chat-form">
-                        <textarea id="user-input" placeholder="Ask about Model Context Protocol..." rows="2"></textarea>
-                        <button type="submit" id="send-button">
-                            <span>Send</span>
+                <!-- Input Area -->
+                <div class="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800">
+                    <form id="chat-form" class="flex items-end space-x-2">
+                        <div class="relative flex-1">
+                            <textarea 
+                                id="user-input" 
+                                class="w-full border border-gray-300 dark:border-gray-600 rounded-xl py-3 px-4 pr-12 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 resize-none transition-all duration-300"
+                                placeholder="Ask about Model Context Protocol..." 
+                                rows="1"
+                                maxlength="4000"
+                            ></textarea>
+                            <div class="absolute right-2 bottom-3 text-xs text-gray-400">
+                                <span id="char-count">0</span>/4000
+                            </div>
+                        </div>
+                        <button 
+                            type="submit" 
+                            id="send-button"
+                            class="bg-primary-600 text-white rounded-xl p-3 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                            disabled
+                        >
+                            <span class="sr-only">Send</span>
+                            <i class="fas fa-paper-plane"></i>
                         </button>
                     </form>
+                    <div class="mt-2 text-xs text-gray-500 dark:text-gray-400 flex justify-between">
+                        <div>
+                            <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">Shift + Enter</kbd>
+                            for new line
+                        </div>
+                        <div id="status-indicator" class="opacity-0 transition-opacity">
+                            <i class="fas fa-check text-green-500 mr-1"></i>
+                            <span>Connected</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
         
-        <footer>
-            <p>Model Context Protocol RAG Chatbot - Powered by LangChain & OpenAI</p>
+        <!-- Footer -->
+        <footer class="mt-6 text-center text-gray-500 dark:text-gray-400 text-sm">
+            <p>Model Context Protocol RAG Chatbot – Powered by LangChain & OpenAI</p>
+            <div class="mt-2 flex justify-center space-x-4">
+                <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                    <i class="fab fa-github"></i> GitHub
+                </a>
+                <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                    <i class="fas fa-book"></i> Documentation
+                </a>
+                <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                    <i class="fas fa-question-circle"></i> Help
+                </a>
+            </div>
         </footer>
     </div>
 
+    <!-- JavaScript -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // DOM elements
             const chatForm = document.getElementById('chat-form');
             const userInput = document.getElementById('user-input');
             const messagesContainer = document.getElementById('messages');
+            const sendButton = document.getElementById('send-button');
+            const themeToggle = document.getElementById('theme-toggle');
+            const charCount = document.getElementById('char-count');
+            const statusIndicator = document.getElementById('status-indicator');
             
-            // Resize textarea as user types
-            userInput.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = (this.scrollHeight) + 'px';
+            // Show connection status
+            setTimeout(() => {
+                statusIndicator.classList.remove('opacity-0');
+                setTimeout(() => {
+                    statusIndicator.classList.add('opacity-0');
+                }, 3000);
+            }, 1000);
+
+            // Message history storage
+            let messageHistory = [];
+            
+            // Theme handling
+            const isDarkMode = localStorage.getItem('darkMode') === 'true';
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+            }
+            
+            themeToggle.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+                localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
             });
+            
+            // Auto-resize textarea as user types
+            userInput.addEventListener('input', function() {
+                // Update character count
+                charCount.textContent = this.value.length;
+                
+                // Auto resize
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+                
+                // Enable/disable send button
+                sendButton.disabled = this.value.trim().length === 0;
+            });
+            
+            // Allow shift+enter for new line
+            userInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!sendButton.disabled) {
+                        chatForm.dispatchEvent(new Event('submit'));
+                    }
+                }
+            });
+            
+            // Format code blocks in messages
+            function formatMessage(text) {
+                // Basic code block formatting
+                const formattedText = text.replace(/```(\w+)?\s*([\s\S]*?)```/g, (match, language, code) => {
+                    return `<pre class="mt-2 mb-2"><code class="language-${language || 'plaintext'} rounded-md p-3 bg-gray-800 text-gray-100 block overflow-x-auto text-sm">${code}</code></pre>`;
+                });
+                
+                // Simple markdown-like formatting
+                return formattedText
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic
+                    .replace(/`(.*?)`/g, '<code class="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm">$1</code>'); // Inline code
+            }
+            
+            // Generate a timestamp
+            function getTimestamp() {
+                return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+            
+            // Add message to chat
+            function addMessage(sender, content, isError = false) {
+                const isUser = sender === 'user';
+                const timestamp = getTimestamp();
+                
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('flex', 'items-start', 'space-x-2');
+                if (isUser) {
+                    messageElement.classList.add('flex-row-reverse', 'space-x-reverse');
+                }
+                
+                let avatar;
+                if (isUser) {
+                    avatar = `<div class="w-8 h-8 rounded-full bg-violet-500 flex-shrink-0 flex items-center justify-center text-white">
+                                <i class="fas fa-user text-sm"></i>
+                              </div>`;
+                } else {
+                    avatar = `<div class="w-8 h-8 rounded-full bg-primary-600 flex-shrink-0 flex items-center justify-center text-white">
+                                <i class="fas fa-robot text-sm"></i>
+                              </div>`;
+                }
+                
+                // Format the message content
+                const formattedContent = formatMessage(content);
+                
+                messageElement.innerHTML = `
+                    ${avatar}
+                    <div class="max-w-[80%]">
+                        <div class="flex items-end mb-1 ${isUser ? 'justify-end' : ''}">
+                            <span class="font-medium text-sm">${isUser ? 'You' : 'MCP Assistant'}</span>
+                            <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">${timestamp}</span>
+                        </div>
+                        <div class="${isUser 
+                            ? 'bg-primary-500 text-white rounded-lg rounded-tr-none' 
+                            : isError 
+                                ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded-lg rounded-tl-none'
+                                : 'bg-gray-100 dark:bg-gray-700 rounded-lg rounded-tl-none'
+                            } p-3 animate-[fadeIn_0.3s_ease-in-out]">
+                            ${formattedContent}
+                        </div>
+                    </div>
+                `;
+                
+                messagesContainer.appendChild(messageElement);
+                
+                // Apply syntax highlighting to code blocks
+                messageElement.querySelectorAll('code').forEach(block => {
+                    hljs.highlightElement(block);
+                });
+                
+                // Scroll to newest message
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                return messageElement;
+            }
+            
+            // Add typing indicator
+            function addTypingIndicator() {
+                const indicator = document.createElement('div');
+                indicator.classList.add('flex', 'items-start', 'space-x-2', 'typing-indicator');
+                
+                indicator.innerHTML = `
+                    <div class="w-8 h-8 rounded-full bg-primary-600 flex-shrink-0 flex items-center justify-center text-white">
+                        <i class="fas fa-robot text-sm"></i>
+                    </div>
+                    <div class="max-w-[80%]">
+                        <div class="flex items-end mb-1">
+                            <span class="font-medium text-sm">MCP Assistant</span>
+                            <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">${getTimestamp()}</span>
+                        </div>
+                        <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg rounded-tl-none">
+                            <div class="flex space-x-1">
+                                <div class="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-typing"></div>
+                                <div class="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-typing delay-150"></div>
+                                <div class="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-typing delay-300"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                messagesContainer.appendChild(indicator);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                return indicator;
+            }
             
             // Handle form submission
             chatForm.addEventListener('submit', async (e) => {
@@ -58,15 +318,20 @@
                 const message = userInput.value.trim();
                 if (!message) return;
                 
+                // Disable input while processing
+                userInput.disabled = true;
+                sendButton.disabled = true;
+                
                 // Add user message to chat
                 addMessage('user', message);
                 
-                // Clear input
+                // Clear input and reset height
                 userInput.value = '';
+                charCount.textContent = '0';
                 userInput.style.height = 'auto';
                 
-                // Add loading indicator
-                const loadingElement = addMessage('system loading', 'Thinking...');
+                // Add typing indicator
+                const typingIndicator = addTypingIndicator();
                 
                 try {
                     // Send request to backend
@@ -84,40 +349,25 @@
                     
                     const data = await response.json();
                     
-                    // Replace loading indicator with actual response
-                    loadingElement.remove();
-                    addMessage('system', data.response);
+                    // Remove typing indicator
+                    typingIndicator.remove();
+                    
+                    // Add response to chat
+                    addMessage('assistant', data.response);
                     
                 } catch (error) {
                     console.error('Error:', error);
-                    loadingElement.remove();
-                    addMessage('system error', 'Sorry, there was an error processing your request. Please try again.');
+                    typingIndicator.remove();
+                    addMessage('assistant', 'I encountered an error processing your request. Please try again.', true);
+                } finally {
+                    // Re-enable input
+                    userInput.disabled = false;
+                    userInput.focus();
                 }
-                
-                // Scroll to bottom
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
             });
             
-            // Function to add message to chat
-            function addMessage(type, content) {
-                const messageElement = document.createElement('div');
-                messageElement.className = `message ${type}`;
-                
-                const contentElement = document.createElement('div');
-                contentElement.className = 'message-content';
-                
-                const paragraph = document.createElement('p');
-                paragraph.textContent = content;
-                
-                contentElement.appendChild(paragraph);
-                messageElement.appendChild(contentElement);
-                messagesContainer.appendChild(messageElement);
-                
-                // Scroll to bottom
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                
-                return messageElement;
-            }
+            // Focus input on page load
+            userInput.focus();
         });
     </script>
 </body>
