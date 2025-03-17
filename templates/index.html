@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP RAG Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Model Context Protocol Assistant</h1>
+            <p>Ask questions about Model Context Protocol (MCP)</p>
+        </header>
+        
+        <main>
+            <div class="chat-container" id="chat-container">
+                <div class="messages" id="messages">
+                    <div class="message system">
+                        <div class="message-content">
+                            <p>Hello! I'm your Model Context Protocol assistant. I can help answer your questions about MCP, an open protocol that enables seamless integration between LLM applications and external data sources and tools. How can I help you today?</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="input-container">
+                    <form id="chat-form">
+                        <textarea id="user-input" placeholder="Ask about Model Context Protocol..." rows="2"></textarea>
+                        <button type="submit" id="send-button">
+                            <span>Send</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>Model Context Protocol RAG Chatbot - Powered by LangChain & OpenAI</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chatForm = document.getElementById('chat-form');
+            const userInput = document.getElementById('user-input');
+            const messagesContainer = document.getElementById('messages');
+            
+            // Resize textarea as user types
+            userInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+            
+            // Handle form submission
+            chatForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const message = userInput.value.trim();
+                if (!message) return;
+                
+                // Add user message to chat
+                addMessage('user', message);
+                
+                // Clear input
+                userInput.value = '';
+                userInput.style.height = 'auto';
+                
+                // Add loading indicator
+                const loadingElement = addMessage('system loading', 'Thinking...');
+                
+                try {
+                    // Send request to backend
+                    const response = await fetch('/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ message })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to get response');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Replace loading indicator with actual response
+                    loadingElement.remove();
+                    addMessage('system', data.response);
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    loadingElement.remove();
+                    addMessage('system error', 'Sorry, there was an error processing your request. Please try again.');
+                }
+                
+                // Scroll to bottom
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
+            
+            // Function to add message to chat
+            function addMessage(type, content) {
+                const messageElement = document.createElement('div');
+                messageElement.className = `message ${type}`;
+                
+                const contentElement = document.createElement('div');
+                contentElement.className = 'message-content';
+                
+                const paragraph = document.createElement('p');
+                paragraph.textContent = content;
+                
+                contentElement.appendChild(paragraph);
+                messageElement.appendChild(contentElement);
+                messagesContainer.appendChild(messageElement);
+                
+                // Scroll to bottom
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                return messageElement;
+            }
+        });
+    </script>
+</body>
+</html>
